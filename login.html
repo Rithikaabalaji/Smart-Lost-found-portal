@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In / Register - Smart Lost & Found Portal</title>
+
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+
+  <!-- Supabase JS Client v2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="auth-page">
+
+  <div class="auth-container">
+    
+    <!-- Header -->
+    <div class="auth-header">
+      <a class="auth-logo" href="index.html">
+        <div class="brand-icon">
+          <i data-lucide="compass" style="width: 24px; height: 24px;"></i>
+        </div>
+        <div style="text-align: left;">
+          <span class="brand-title" style="font-size: 1.15rem;">SmartLost&amp;Found</span>
+          <span class="brand-badge" style="font-size: 0.65rem;">Auth Portal</span>
+        </div>
+      </a>
+
+      <h1 id="authTitle" class="auth-title">Welcome Back</h1>
+      <p id="authSubtitle" class="auth-subtitle">Sign in to report lost belongings or verify item claims</p>
+
+      <!-- Navigation Tabs (Sign In vs Sign Up) -->
+      <div class="auth-nav-tabs">
+        <button id="tabSignIn" class="auth-tab-btn active">Sign In</button>
+        <button id="tabSignUp" class="auth-tab-btn">Create Account</button>
+      </div>
+    </div>
+
+    <!-- Body / Form Area -->
+    <div class="auth-body">
+
+      <!-- Alert Box for Errors & Success -->
+      <div id="authAlert" class="auth-alert"></div>
+
+      <!-- ========================================== -->
+      <!-- TAB 1: SIGN IN FORM                        -->
+      <!-- ========================================== -->
+      <form id="formSignIn" class="auth-form">
+        <div class="form-group">
+          <label class="form-label" for="loginEmail">Email Address</label>
+          <div class="input-with-icon">
+            <i data-lucide="mail" class="field-icon" style="width: 18px; height: 18px;"></i>
+            <input type="email" id="loginEmail" class="form-control" placeholder="you@campus.edu" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="loginPassword">Password</label>
+          <div class="input-with-icon">
+            <i data-lucide="lock" class="field-icon" style="width: 18px; height: 18px;"></i>
+            <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required />
+            <button type="button" class="toggle-password" data-target="loginPassword" title="Toggle password visibility">
+              <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-options-row">
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-secondary);">
+            <input type="checkbox" id="rememberMe" checked style="cursor: pointer;" />
+            <span>Remember me</span>
+          </label>
+          <a href="#" class="auth-link" onclick="alert('In demo mode, you can sign in directly using the 1-Click Demo Profiles below, or connect your Supabase project in Settings.'); return false;">Forgot password?</a>
+        </div>
+
+        <button type="submit" id="signInSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.95rem;">
+          <i data-lucide="log-in" style="width: 18px; height: 18px;"></i>
+          <span>Sign In</span>
+        </button>
+      </form>
+
+      <!-- ========================================== -->
+      <!-- TAB 2: SIGN UP / REGISTER FORM             -->
+      <!-- ========================================== -->
+      <form id="formSignUp" class="auth-form" style="display: none;">
+        <div class="form-group">
+          <label class="form-label" for="signupName">Full Name *</label>
+          <div class="input-with-icon">
+            <i data-lucide="user" class="field-icon" style="width: 18px; height: 18px;"></i>
+            <input type="text" id="signupName" class="form-control" placeholder="e.g. John Doe" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="signupEmail">Email Address *</label>
+          <div class="input-with-icon">
+            <i data-lucide="mail" class="field-icon" style="width: 18px; height: 18px;"></i>
+            <input type="email" id="signupEmail" class="form-control" placeholder="john.doe@campus.edu" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="signupPhone">Phone Number (Optional)</label>
+          <div class="input-with-icon">
+            <i data-lucide="phone" class="field-icon" style="width: 18px; height: 18px;"></i>
+            <input type="tel" id="signupPhone" class="form-control" placeholder="+1 (555) 123-4567" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="signupPassword">Password *</label>
+          <div class="input-with-icon">
+            <i data-lucide="lock" class="field-icon" style="width: 18px; height: 18px;"></i>
+            <input type="password" id="signupPassword" class="form-control" placeholder="At least 6 characters" required />
+            <button type="button" class="toggle-password" data-target="signupPassword" title="Toggle password visibility">
+              <i data-lucide="eye" style="width: 16px; height: 16px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="signupConfirmPassword">Confirm Password *</label>
+          <div class="input-with-icon">
+            <i data-lucide="shield-check" class="field-icon" style="width: 18px; height: 18px;"></i>
+            <input type="password" id="signupConfirmPassword" class="form-control" placeholder="Repeat your password" required />
+          </div>
+        </div>
+
+        <button type="submit" id="signUpSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.95rem;">
+          <i data-lucide="user-plus" style="width: 18px; height: 18px;"></i>
+          <span>Create Account</span>
+        </button>
+      </form>
+
+      <!-- ========================================== -->
+      <!-- 1-CLICK DEMO ACCESS PROFILES               -->
+      <!-- ========================================== -->
+      <div class="demo-access-divider">
+        <span>Or 1-Click Demo Login</span>
+      </div>
+
+      <div class="demo-users-grid">
+        <button type="button" class="demo-user-card" data-user-id="usr_alice_01" data-user-name="Alice Chen">
+          <img class="demo-user-avatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" alt="Alice" />
+          <div class="demo-user-details">
+            <h5>Alice Chen (Campus Finder)</h5>
+            <p>Found MacBook &amp; Subaru Car Keys &bull; Review claims</p>
+          </div>
+          <i data-lucide="arrow-right" style="width: 16px; height: 16px; margin-left: auto; color: var(--text-muted);"></i>
+        </button>
+
+        <button type="button" class="demo-user-card" data-user-id="usr_bob_02" data-user-name="Bob Martinez">
+          <img class="demo-user-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150" alt="Bob" />
+          <div class="demo-user-details">
+            <h5>Bob Martinez (Item Owner)</h5>
+            <p>Lost MacBook Air &amp; Leather Wallet &bull; Submit claim</p>
+          </div>
+          <i data-lucide="arrow-right" style="width: 16px; height: 16px; margin-left: auto; color: var(--text-muted);"></i>
+        </button>
+
+        <button type="button" class="demo-user-card" data-user-id="usr_clara_03" data-user-name="Clara Vance">
+          <img class="demo-user-avatar" src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150" alt="Clara" />
+          <div class="demo-user-details">
+            <h5>Clara Vance (Student)</h5>
+            <p>Lost Student ID Badge &bull; Biology Dept</p>
+          </div>
+          <i data-lucide="arrow-right" style="width: 16px; height: 16px; margin-left: auto; color: var(--text-muted);"></i>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="auth-footer">
+      <i data-lucide="arrow-left" style="width: 15px; height: 15px;"></i>
+      <a href="index.html" class="auth-link">Return to Portal as Guest</a>
+    </div>
+
+  </div>
+
+  <!-- Page Logic Script -->
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

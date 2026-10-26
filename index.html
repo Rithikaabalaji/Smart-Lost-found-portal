@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Lost & Found Management Portal</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+
+  <!-- Supabase JS Client v2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="container">
+      <a class="brand" href="#" onclick="location.reload();">
+        <div class="brand-icon">
+          <i data-lucide="compass" style="width: 24px; height: 24px;"></i>
+        </div>
+        <div>
+          <span class="brand-title">SmartLost&amp;Found</span>
+          <span class="brand-badge">AI Powered</span>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        <!-- Active User Profile & Demo Switcher -->
+        <div class="user-menu" id="userMenuWrapper" title="Switch active demo profile">
+          <img id="navUserAvatar" class="user-avatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150" alt="User" />
+          <div class="user-info-brief">
+            <span id="navUserName" class="user-name">Alice Chen</span>
+            <span id="navUserRole" class="user-role-label">Demo Account</span>
+          </div>
+          <select id="demoUserSwitcher" class="filter-select" style="padding: 2px 6px; font-size: 0.75rem; border-color: transparent; background: transparent; cursor: pointer;">
+            <!-- Options populated dynamically by JS -->
+          </select>
+          <button id="navSignOutBtn" class="btn btn-subtle btn-sm" title="Sign out" style="padding: 3px 8px; font-size: 0.75rem; margin-left: 2px; border-radius: var(--radius-full);">
+            <i data-lucide="log-out" style="width: 14px; height: 14px;"></i>
+          </button>
+        </div>
+
+        <!-- Dedicated Login Button (shown when logged out or to access Login Page) -->
+        <a id="navLoginBtn" href="login.html" class="btn btn-outline btn-sm" style="display: none;">
+          <i data-lucide="log-in" style="width: 16px; height: 16px;"></i>
+          <span>Sign In</span>
+        </a>
+
+        <!-- Notification Bell -->
+        <div class="notification-bell-btn">
+          <button id="notifBellBtn" class="btn btn-subtle btn-icon" title="Notifications">
+            <i data-lucide="bell" style="width: 20px; height: 20px;"></i>
+            <span id="notifCountBadge" class="notif-badge-count" style="display: none;">0</span>
+          </button>
+
+          <!-- Notification Dropdown -->
+          <div id="notificationsDropdown" class="notifications-dropdown">
+            <div class="notif-header">
+              <h3>Notifications</h3>
+              <button id="markAllReadBtn" class="btn btn-outline" style="padding: 2px 8px; font-size: 0.75rem;">
+                Mark all read
+              </button>
+            </div>
+            <div id="notifList" class="notif-list">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings (Supabase Connect) -->
+        <button id="openSettingsBtn" class="btn btn-subtle btn-icon" title="Supabase Database Settings">
+          <i data-lucide="settings" style="width: 20px; height: 20px;"></i>
+        </button>
+
+        <!-- Report CTA -->
+        <button id="openReportModalBtn" class="btn btn-primary">
+          <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i>
+          <span>Report Item</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Header Banner -->
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-banner">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+            Intelligent Similarity Engine Active
+          </div>
+          <h1 class="hero-title">Recover What's Yours, Return What's Lost</h1>
+          <p class="hero-desc">
+            Report misplaced belongings or items found across campus and venues. Our real-time AI similarity algorithm automatically correlates lost and found reports to reunite owners faster.
+          </p>
+
+          <div class="hero-stats">
+            <div class="stat-item">
+              <span id="statLostCount" class="stat-val">0</span>
+              <span class="stat-lbl">Active Lost Reports</span>
+            </div>
+            <div class="stat-item">
+              <span id="statFoundCount" class="stat-val">0</span>
+              <span class="stat-lbl">Items Awaiting Claim</span>
+            </div>
+            <div class="stat-item">
+              <span id="statResolvedCount" class="stat-val">0</span>
+              <span class="stat-lbl">Successfully Reunited</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content & Explorer -->
+  <main class="main-content">
+    <div class="container">
+      
+      <!-- Filter Toolbar -->
+      <div class="filter-toolbar">
+        <div class="search-row">
+          <div class="search-input-wrapper">
+            <i data-lucide="search" style="width: 18px; height: 18px;"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search by title, description (e.g. 'MacBook', 'Fossil wallet', 'Keys')..." />
+          </div>
+
+          <select id="categoryFilter" class="filter-select">
+            <option value="all">All Categories</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Wallets & Bags">Wallets &amp; Bags</option>
+            <option value="Keys">Keys</option>
+            <option value="IDs & Cards">IDs &amp; Cards</option>
+            <option value="Clothing & Accessories">Clothing &amp; Accessories</option>
+            <option value="Pets">Pets</option>
+            <option value="Documents & Books">Documents &amp; Books</option>
+            <option value="Other">Other</option>
+          </select>
+
+          <select id="statusFilter" class="filter-select">
+            <option value="all">All Statuses</option>
+            <option value="open">Open</option>
+            <option value="pending_claim">Pending Claim</option>
+            <option value="resolved">Resolved</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="tabs-container">
+        <div class="tabs-list">
+          <button class="tab-btn active" data-tab="all">
+            <i data-lucide="layout-grid" style="width: 16px; height: 16px;"></i>
+            All Posts
+          </button>
+          <button class="tab-btn" data-tab="lost">
+            <i data-lucide="help-circle" style="width: 16px; height: 16px;"></i>
+            Lost Items
+          </button>
+          <button class="tab-btn" data-tab="found">
+            <i data-lucide="check-circle-2" style="width: 16px; height: 16px;"></i>
+            Found Items
+          </button>
+          <button class="tab-btn" data-tab="matches">
+            <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+            Smart Matches
+            <span id="smartMatchesBadge" class="tab-badge smart-match-badge">0</span>
+          </button>
+          <button class="tab-btn" data-tab="claims">
+            <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i>
+            Claims Portal
+          </button>
+          <button class="tab-btn" data-tab="my-items">
+            <i data-lucide="user-check" style="width: 16px; height: 16px;"></i>
+            My Reports
+          </button>
+        </div>
+      </div>
+
+      <!-- Dynamic View Container (Grid, Matches, or Claims) -->
+      <div id="viewContainer">
+        <!-- Rendered by JavaScript -->
+      </div>
+
+    </div>
+  </main>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <div class="container">
+      <div class="footer-links">
+        <a href="login.html">Login / Register</a>
+        <a href="#about" onclick="alert('Smart Lost & Found Management Portal - Built with HTML5, CSS3, ES6 JavaScript, and Supabase PostgreSQL.');">About Portal</a>
+        <a href="#schema" onclick="alert('PostgreSQL database includes profiles, items, claims, and notifications with RLS policies.');">Database Schema</a>
+        <a href="#matching" onclick="alert('Matching engine evaluates weighted Jaccard token similarity, Levenshtein fuzzy metrics, location keywords, and temporal proximity.');">Similarity Logic</a>
+      </div>
+      <p>Smart Lost &amp; Found Portal &copy; 2026. Empowering fast, trusted item recovery.</p>
+    </div>
+  </footer>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: REPORT ITEM (LOST / FOUND)                                    -->
+  <!-- ==================================================================== -->
+  <div id="reportModal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title">Report an Item</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <form id="reportForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Report Type *</label>
+            <div style="display: flex; gap: 20px;">
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="radio" name="reportType" value="lost" checked />
+                <span style="font-weight: 600; color: var(--lost-color);">I Lost an Item</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="radio" name="reportType" value="found" />
+                <span style="font-weight: 600; color: var(--found-color);">I Found an Item</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reportTitle">Item Title *</label>
+            <input type="text" id="reportTitle" class="form-control" placeholder="e.g. Space Gray 13-inch MacBook Air" required />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="reportCategory">Category *</label>
+              <select id="reportCategory" class="form-control" required>
+                <option value="Electronics">Electronics</option>
+                <option value="Wallets & Bags">Wallets &amp; Bags</option>
+                <option value="Keys">Keys</option>
+                <option value="IDs & Cards">IDs &amp; Cards</option>
+                <option value="Clothing & Accessories">Clothing &amp; Accessories</option>
+                <option value="Pets">Pets</option>
+                <option value="Documents & Books">Documents &amp; Books</option>
+                <option value="Jewelry">Jewelry</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reportDate">Date Lost / Found *</label>
+              <input type="date" id="reportDate" class="form-control" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="reportLocation">Location *</label>
+              <input type="text" id="reportLocation" class="form-control" placeholder="e.g. Main Library 2nd Floor Study Room" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="reportContact">Contact Info / Retrieval Spot</label>
+              <input type="text" id="reportContact" class="form-control" placeholder="e.g. Left with reception / Phone / Email" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reportDescription">Description &amp; Identifying Details *</label>
+            <textarea id="reportDescription" class="form-control" placeholder="Describe unique markings, colors, stickers, scratches, or specific contents to help verification..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Item Photo (Optional)</label>
+            <div id="imageDropzone" class="image-dropzone">
+              <i data-lucide="upload-cloud" style="width: 32px; height: 32px; color: var(--primary); margin-bottom: 6px;"></i>
+              <div id="dropzoneText" style="font-size: 0.85rem; color: var(--text-secondary);">
+                Drag and drop image here or <strong>click to browse</strong>
+              </div>
+              <input type="file" id="imageFileInput" accept="image/*" style="display: none;" />
+              <img id="dropzonePreview" class="dropzone-preview" style="display: none;" alt="Preview" />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+          <button type="submit" id="submitReportBtn" class="btn btn-primary">Submit Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: ITEM DETAILS                                                  -->
+  <!-- ==================================================================== -->
+  <div id="itemDetailsModal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="itemDetailsTitle" class="modal-title">Item Details</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div id="itemDetailsBody" class="modal-body">
+        <!-- Filled dynamically by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: SUBMIT CLAIM                                                  -->
+  <!-- ==================================================================== -->
+  <div id="claimModal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Claim This Item</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 14px;">
+          You are claiming: <strong id="claimItemTitleTarget" style="color: var(--text-main);">Item Title</strong>
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="claimMessageInput">Proof of Ownership / Message to Finder *</label>
+          <textarea id="claimMessageInput" class="form-control" style="min-height: 120px;" placeholder="Provide details only the true owner would know (e.g. serial numbers, passcode hint, engraving, exact items inside, receipts, or photos)..." required></textarea>
+        </div>
+
+        <div style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-card-subtle); padding: 10px; border-radius: var(--radius-sm);">
+          <i data-lucide="shield" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+          The finder will receive your message and can verify your claim before handing the item over.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+        <button type="button" id="submitClaimBtn" class="btn btn-primary">
+          <i data-lucide="send" style="width: 16px; height: 16px;"></i> Send Claim Request
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: SUPABASE CONFIGURATION & DEMO SETTINGS                        -->
+  <!-- ==================================================================== -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 540px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Backend &amp; Supabase Settings</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+          Connect your live Supabase database or run in standalone offline demo mode with seeded records.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="settingSupabaseUrl">Supabase Project URL</label>
+          <input type="text" id="settingSupabaseUrl" class="form-control" placeholder="https://your-project.supabase.co" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="settingSupabaseKey">Supabase Public Anon Key</label>
+          <input type="text" id="settingSupabaseKey" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI..." />
+        </div>
+
+        <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px; margin-top: 10px;">
+          <input type="checkbox" id="settingForceDemo" style="width: 18px; height: 18px; cursor: pointer;" />
+          <label for="settingForceDemo" style="font-size: 0.875rem; cursor: pointer;">
+            Force Standalone Demo Mode (Simulate RLS, Claims &amp; Profiles locally)
+          </label>
+        </div>
+
+        <div style="margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Need to restart test state?</span>
+          <button type="button" id="resetDemoDataBtn" class="btn btn-outline btn-sm">
+            Reset Demo Data
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline modal-cancel-btn">Cancel</button>
+        <button type="button" id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Alert Host -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Application Modules -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
