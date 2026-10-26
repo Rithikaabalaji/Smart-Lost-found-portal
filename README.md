@@ -33,7 +33,7 @@ How to Run
 1. Download or clone this repository.
 2. Open index.html in a web browser.
 3. Configure Supabase if required for backend features.
-
+222222
 Author
 
 Rithikaa B
